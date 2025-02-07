@@ -1,3 +1,3 @@
 *.wasm
-./example/main.js
+/example/main.js
 .clangd
