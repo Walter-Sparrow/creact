@@ -15,7 +15,13 @@ body {
 }
 
 #green_box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+
   width: 200px;
   height: 200px;
   background-color: green;
+  color: white;
 }

@@ -1,43 +1,64 @@
 #pragma once
 
-#include <emscripten.h>
+#include <cstddef>
 
-typedef enum : char {
-  creact_element_type_html = 0,
-  creact_element_type_function,
-} creact_element_type;
+struct creact_node;
+typedef const char *creact_text;
 
 typedef struct {
   const char *name;
   const char *value;
 } creact_component_prop;
 
-typedef struct creact_element *(creact_component)(creact_component_prop *props);
+typedef struct {
+  creact_component_prop *values;
+  size_t len;
+} creact_component_props;
 
-typedef struct creact_element {
-  creact_element_type type;
-  union {
-    const char *html_tag;
-    creact_component *component;
-  };
-  creact_component_prop *props;
-  size_t props_len;
-  struct creact_element **children;
-  size_t children_len;
+typedef struct {
+  struct creact_node *values;
+  size_t len;
+} creact_component_children;
+
+typedef struct {
   const char *key;
-} creact_element;
+  const char *html_tag;
+  creact_component_props props;
+  creact_component_children children;
+} creact_element_html;
 
-void creact_render_component(const char *html_tag, const char *html_parent,
-                             creact_component_prop *props, size_t props_len);
+typedef struct creact_node (*creact_function_component)(
+    creact_component_props, creact_component_children);
 
-creact_element *
-creact_create_html_element(const char *key, const char *html_tag,
-                           creact_component_prop *props, size_t props_len,
-                           creact_element **children, size_t children_len);
+typedef struct creact_element_function_component {
+  creact_function_component component;
+  creact_component_props props;
+  creact_component_children children;
+} creact_element_function_component;
 
-creact_element *
-creact_create_component_element(const char *key, creact_component *component,
-                                creact_component_prop *props, size_t props_len,
-                                creact_element **children, size_t children_len);
+typedef enum : unsigned char {
+  creact_element_type_text = 0,
+  creact_element_type_html,
+  creact_element_type_function_component,
+} creact_node_type;
 
-void creact_render(const char *html_root, creact_element *component);
+typedef struct creact_node {
+  creact_node_type type;
+  union {
+    creact_text text;
+    creact_element_html *html;
+    creact_element_function_component *function_component;
+  } element;
+} creact_node;
+
+creact_node creact_create_element(const char *text);
+
+creact_node creact_create_element(const char *key, const char *html_tag,
+                                  creact_component_props props,
+                                  creact_component_children children);
+
+creact_node creact_create_element(creact_function_component component,
+                                  creact_component_props props,
+                                  creact_component_children children);
+
+void creact_render(const char *html_root, creact_node node);
