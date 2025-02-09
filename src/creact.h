@@ -1,9 +1,11 @@
 #pragma once
 
-#include <cstddef>
+#include <string>
+#include <variant>
+#include <vector>
 
 struct creact_node;
-typedef const char *creact_text;
+typedef std::string creact_text;
 
 typedef struct {
   const char *name;
@@ -11,29 +13,19 @@ typedef struct {
 } creact_component_prop;
 
 typedef struct {
-  creact_component_prop *values;
-  size_t len;
-} creact_component_props;
-
-typedef struct {
-  struct creact_node *values;
-  size_t len;
-} creact_component_children;
-
-typedef struct {
-  const char *key;
-  const char *html_tag;
-  creact_component_props props;
-  creact_component_children children;
+  std::string key;
+  std::string html_tag;
+  std::vector<creact_component_prop> props;
+  std::vector<creact_node> children;
 } creact_element_html;
 
 typedef struct creact_node (*creact_function_component)(
-    creact_component_props, creact_component_children);
+    std::vector<creact_component_prop>, std::vector<creact_node>);
 
 typedef struct creact_element_function_component {
   creact_function_component component;
-  creact_component_props props;
-  creact_component_children children;
+  std::vector<creact_component_prop> props;
+  std::vector<creact_node> children;
 } creact_element_function_component;
 
 typedef enum : unsigned char {
@@ -44,21 +36,20 @@ typedef enum : unsigned char {
 
 typedef struct creact_node {
   creact_node_type type;
-  union {
-    creact_text text;
-    creact_element_html *html;
-    creact_element_function_component *function_component;
-  } element;
+  std::variant<creact_text, creact_element_html,
+               creact_element_function_component>
+      element;
 } creact_node;
 
-creact_node creact_create_element(const char *text);
+creact_node creact_create_element(const std::string text);
 
-creact_node creact_create_element(const char *key, const char *html_tag,
-                                  creact_component_props props,
-                                  creact_component_children children);
+creact_node creact_create_element(const std::string key,
+                                  const std::string html_tag,
+                                  std::vector<creact_component_prop> props,
+                                  std::vector<creact_node> children);
 
 creact_node creact_create_element(creact_function_component component,
-                                  creact_component_props props,
-                                  creact_component_children children);
+                                  std::vector<creact_component_prop> props,
+                                  std::vector<creact_node> children);
 
-void creact_render(const char *html_root, creact_node node);
+void creact_render(const std::string html_root, creact_node node);

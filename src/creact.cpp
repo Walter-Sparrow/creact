@@ -2,38 +2,46 @@
 #include <cstddef>
 #include <cstdio>
 #include <emscripten.h>
+#include <string>
+#include <tuple>
+#include <vector>
 
-creact_node creact_create_element(const char *text) {
+creact_node creact_create_element(const std::string text) {
   creact_node node;
   node.type = creact_element_type_text;
-  node.element.text = text;
+  node.element = text;
   return node;
 }
 
-creact_node creact_create_element(const char *key, const char *html_tag,
-                                  creact_component_props props,
-                                  creact_component_children children) {
+creact_node creact_create_element(const std::string key,
+                                  const std::string html_tag,
+                                  std::vector<creact_component_prop> props,
+                                  std::vector<creact_node> children) {
   creact_node node;
   node.type = creact_element_type_html;
-  node.element.html =
-      (creact_element_html *)malloc(sizeof(creact_element_html));
-  node.element.html->key = key;
-  node.element.html->html_tag = html_tag;
-  node.element.html->props = props;
-  node.element.html->children = children;
+  creact_element_html element;
+
+  element.key = key;
+  element.html_tag = html_tag;
+  element.props = props;
+  element.children = children;
+
+  node.element = element;
   return node;
 }
 
 creact_node creact_create_element(creact_function_component component,
-                                  creact_component_props props,
-                                  creact_component_children children) {
+                                  std::vector<creact_component_prop> props,
+                                  std::vector<creact_node> children) {
   creact_node node;
   node.type = creact_element_type_function_component;
-  node.element.function_component = (creact_element_function_component *)malloc(
-      sizeof(creact_element_function_component));
-  node.element.function_component->component = component;
-  node.element.function_component->props = props;
-  node.element.function_component->children = children;
+  creact_element_function_component element;
+
+  element.component = component;
+  element.props = props;
+  element.children = children;
+
+  node.element = element;
   return node;
 }
 
@@ -74,21 +82,22 @@ EM_JS(void, creact_render_text, (const char *html_parent, const char *text), {
   parent.appendChild(element);
 });
 
-void creact_render(const char *html_root, creact_node node) {
+void creact_render(const std::string html_root, creact_node node) {
   if (node.type == creact_element_type_text) {
-    creact_render_text(html_root, node.element.text);
+    creact_render_text(html_root.c_str(),
+                       std::get<creact_text>(node.element).c_str());
   } else if (node.type == creact_element_type_function_component) {
-    creact_node computedNode = node.element.function_component->component(
-        node.element.function_component->props,
-        node.element.function_component->children);
+    creact_element_function_component element =
+        std::get<creact_element_function_component>(node.element);
+    creact_node computedNode =
+        element.component(element.props, element.children);
     creact_render(html_root, computedNode);
   } else if (node.type == creact_element_type_html) {
-    creact_render_component(node.element.html->html_tag, html_root,
-                            node.element.html->props.values,
-                            node.element.html->props.len);
-    for (size_t i = 0; i < node.element.html->children.len; i++) {
-      creact_render(node.element.html->key,
-                    node.element.html->children.values[i]);
+    creact_element_html element = std::get<creact_element_html>(node.element);
+    creact_render_component(element.html_tag.c_str(), html_root.c_str(),
+                            element.props.data(), element.props.size());
+    for (size_t i = 0; i < element.children.size(); i++) {
+      creact_render(element.key.c_str(), element.children[i]);
     }
   }
 }
