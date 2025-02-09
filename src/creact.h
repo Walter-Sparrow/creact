@@ -41,6 +41,10 @@ typedef struct creact_node {
       element;
 } creact_node;
 
+#define CREACT_COMPONENT(function)                                             \
+  creact_node function(std::vector<creact_component_prop> props,               \
+                       std::vector<creact_node> children)
+
 creact_node creact_create_element(const std::string text);
 
 creact_node creact_create_element(const std::string key,
