@@ -1,5 +1,6 @@
 #pragma once
 
+#include <emscripten/val.h>
 #include <string>
 #include <variant>
 #include <vector>
@@ -13,10 +14,10 @@ typedef struct {
 } creact_component_prop;
 
 typedef struct {
-  std::string key;
   std::string html_tag;
   std::vector<creact_component_prop> props;
   std::vector<creact_node> children;
+  emscripten::val stateNode;
 } creact_element_html;
 
 typedef struct creact_node (*creact_function_component)(
@@ -47,8 +48,7 @@ typedef struct creact_node {
 
 creact_node creact_create_element(const std::string text);
 
-creact_node creact_create_element(const std::string key,
-                                  const std::string html_tag,
+creact_node creact_create_element(const std::string html_tag,
                                   std::vector<creact_component_prop> props,
                                   std::vector<creact_node> children);
 
@@ -57,3 +57,4 @@ creact_node creact_create_element(creact_function_component component,
                                   std::vector<creact_node> children);
 
 void creact_render(const std::string html_root, creact_node node);
+void creact_render(emscripten::val html_root, creact_node node);
