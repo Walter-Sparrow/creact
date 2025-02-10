@@ -1,4 +1,6 @@
 #include "../src/creact.h"
+#include <any>
+#include <functional>
 #include <vector>
 
 CREACT_COMPONENT(link) {
@@ -7,13 +9,30 @@ CREACT_COMPONENT(link) {
   return creact_create_element("a", props, children);
 }
 
+CREACT_COMPONENT(counter) {
+  auto [state, set_state] = creact_use_state(0);
+  creact_node text = creact_create_element("Counter: " + std::to_string(state));
+
+  props.push_back({"class", "counter"});
+  props.push_back({"click", [=](std::any) { set_state(state + 1); }});
+
+  children.push_back(text);
+  return creact_create_element("button", props, children);
+}
+
 CREACT_COMPONENT(green_box) {
+  auto [state, set_state] = creact_use_state(0);
+
   props.push_back({"class", "green_box"});
 
   creact_node text = creact_create_element("Inner text!");
   creact_node link_component = creact_create_element(
       &link, std::vector<creact_component_prop>(), {text});
   children.push_back(link_component);
+
+  creact_node counter_component =
+      creact_create_element(&counter, std::vector<creact_component_prop>(), {});
+  children.push_back(counter_component);
 
   return creact_create_element("p", props, children);
 }
